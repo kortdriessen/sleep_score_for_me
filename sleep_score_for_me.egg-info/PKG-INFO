@@ -1,0 +1,22 @@
+Metadata-Version: 1.2
+Name: sleep-score-for-me
+Version: 0.1.dev0
+Summary: sleep_score_for_me: automated sleep scoring of EEG/LFP/EMG data acquired in rodents
+Home-page: http://github.com/kortdriessen/sleep_score_for_me
+Author: Kort Driessen
+Author-email: driessen2@wisc.edu
+Maintainer: Kort Driessen
+Maintainer-email: driessen2@wisc.edu
+License: MIT
+Description: 
+        sleep_score_for_me: automated sleep scoring of EEG/LFP/EMG data acquired in rodents
+        
+Platform: OS Independent
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Topic :: Scientific/Engineering
+Requires-Python: >= 3.7

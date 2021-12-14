@@ -1,0 +1,8 @@
+numpy
+pandas
+xarray
+matplotlib
+seaborn
+neurodsp
+hypnogram@ git+https://github.com/CSC-UW/hypnogram.git@master#egg=hypnogram
+ecephys@ git+https://github.com/CSC-UW/ecephys.git@kd#egg=ecephys
