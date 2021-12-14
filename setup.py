@@ -1,10 +1,11 @@
 import sys
 import os
 from setuptools import setup, find_packages
+
 PACKAGES = find_packages()
 
-# Get version and release info, which is all stored in shablona/version.py
-ver_file = os.path.join('shablona', 'version.py')
+# Get version and release info, which is all stored in sleep_score_for_me/version.py
+ver_file = os.path.join('sleep_score_for_me', 'version.py')
 with open(ver_file) as f:
     exec(f.read())
 
