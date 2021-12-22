@@ -60,7 +60,7 @@ def _infer_bout_start(df, bout):
 
     return start_time
 
-def load_ssfm_hypnogram(path, st):
+def load_hypno(path, st):
     """Load a Visbrain formatted hypnogram."""
     df = pd.read_csv(path, sep="\t", names=["state", "end_time"], comment="*")
     df["start_time"] = df.apply(lambda row: _infer_bout_start(df, row), axis=1)
@@ -73,4 +73,4 @@ def to_datetime(df, start_datetime):
     df["start_time"] = start_datetime + pd.to_timedelta(df["start_time"], "s")
     df["end_time"] = start_datetime + pd.to_timedelta(df["end_time"], "s")
     df["duration"] = pd.to_timedelta(df["duration"], "s")
-    return df
+    return hp.DatetimeHypnogram(df)
