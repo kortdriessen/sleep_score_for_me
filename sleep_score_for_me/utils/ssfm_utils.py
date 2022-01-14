@@ -89,11 +89,12 @@ PLOTTING FUNCTIONS
 ------------------
 """
 
-def threshplot(data, time=None, percentiles=[50, 60, 65, 70]):
-    
-    #%matplotlib inline
-    # Plot the threshold options for scoring out the NREM: 
-    f, h_ax = plt.subplots(figsize=(40, 15))
+def threshplot(data, time=None, percentiles=[50, 60, 65, 70], cut=None): 
+    f, h_ax = plt.subplots(figsize=(20, 10))
+    if cut:
+        lim = np.percentile(data, cut)
+        data = data[data<cut]
+        h_ax.set_xlim(0, lim)
     h_ax = sns.histplot(data=data, ax=h_ax, bins=50)
     h_ax.axvline(np.percentile(data, percentiles[0]), color='magenta')
     h_ax.axvline(np.percentile(data, percentiles[1]), color='b')
@@ -101,27 +102,33 @@ def threshplot(data, time=None, percentiles=[50, 60, 65, 70]):
     h_ax.axvline(np.percentile(data, percentiles[3]), color='r')
     plt.show()
     
-    f, lin_ax = plt.subplots(figsize=(40, 15))
+    f, lin_ax = plt.subplots(figsize=(40, 10))
     lin_ax = sns.lineplot(x=time, y=data, ax=lin_ax)
     lin_ax.axhline(np.percentile(data, percentiles[0]), color='magenta')
     lin_ax.axhline(np.percentile(data, percentiles[1]), color='b')
     lin_ax.axhline(np.percentile(data, percentiles[2]), color='forestgreen')
     lin_ax.axhline(np.percentile(data, percentiles[3]), color='r')
+    if cut:
+        lim = np.percentile(data, cut)
+        lin_ax.set_ylim(0, lim)
     plt.show()
     return h_ax, lin_ax
 
-def plot_hypno_for_me(hypno, spg, emg_spg, bp_def, chan=2, smooth=False):
+def plot_hypno_for_me(hypno, spg, emg_spg, bp_def, chan=2, smooth=True):
     fig, (m, d, g) = plt.subplots(ncols=1, nrows=3, figsize=(35,15))
-    emg_spg = emg_spg.sel(channel=1)
+    try:
+        emg_spg = emg_spg.sel(channel=1)
+    except KeyError:
+        emg_spg = emg_spg
     try:
         spg = spg.sel(channel=chan)
     except KeyError:
-        print('channel already selected, passing key error (plot_hypno_for_me)')
+        spg = spg
     
     #plot muscle activity
     emg_bp = kd.get_bandpower(emg_spg, bp_def['omega'])
     if smooth==True:
-        emg_bp = kd.get_smoothed_da(emg_bp, smoothing_sigma=12)
+        emg_bp = kd.get_smoothed_da(emg_bp, smoothing_sigma=14)
     sns.lineplot(x=spg.datetime, y=emg_bp, color='black', ax=m) 
     shade_hypno_for_me(hypnogram=hypno, ax=m)
     m.set_title('Muscle Activity (Full Spectrum)')
@@ -129,7 +136,7 @@ def plot_hypno_for_me(hypno, spg, emg_spg, bp_def, chan=2, smooth=False):
     #plot delta power
     delta = kd.get_bandpower(spg, bp_def['delta'])
     if smooth==True:
-        delta = kd.get_smoothed_da(delta, smoothing_sigma=12)
+        delta = kd.get_smoothed_da(delta, smoothing_sigma=14)
     sns.lineplot(x=delta.datetime, y=delta, color='black', ax=d)
     shade_hypno_for_me(hypnogram=hypno, ax=d)
     d.set_title('EEG-'+str(chan)+' Delta Bandpower')
@@ -137,7 +144,7 @@ def plot_hypno_for_me(hypno, spg, emg_spg, bp_def, chan=2, smooth=False):
     #plot gamma power
     gamma = kd.get_bandpower(spg, bp_def['high_gamma'])
     if smooth==True:
-        gamma = kd.get_smoothed_da(gamma, smoothing_sigma=12)
+        gamma = kd.get_smoothed_da(gamma, smoothing_sigma=14)
     sns.lineplot(x=spg.datetime, y=gamma, color='black', ax=g)
     shade_hypno_for_me(hypnogram=hypno, ax=g)
     g.set_title('EEG-'+str(chan)+' Gamma Bandpower')

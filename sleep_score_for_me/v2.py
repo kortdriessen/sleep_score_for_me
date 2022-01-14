@@ -1,9 +1,10 @@
+from typing import Type
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy
-import sleep_score_for_me.utils as ssu
+import sleep_score_for_me.utils.ssfm_utils as ssu
 
 import kd_analysis.main.kd_utils as kd
 import hypnogram as hp
@@ -15,9 +16,11 @@ Functions Needed to do the actual scoring and build the hypnogram
 -----------------------------------------------------------------
 """
 
-def ssfm_v2(spg, emg_spg, nrem_percentiles=[50, 60, 65, 70], rem_percentiles=[60, 70, 80, 85], chan=2, user_hyp=None):
+def ssfm_v2(spg, emg_spg, nrem_percentiles=[50, 60, 65, 70], rem_percentiles=[60, 70, 80, 85], chan=2, ss=8, user_hyp=None):
     """
-    Uses the metrics and scoring techniques of Watson et al., 2016 (Neuron) to score a chunk of data into NREM, REM, and Wake
+    Scores data into Wake, REM, NREM, and Transition-to-REM
+    NOTE: Both spectrograms can have one channel or multiple. 
+    SSFM will always select EMG channel-1 if multiple are given, whereas the 'chan' aregument selects the data channel if multiple are given.
     
     spg --> xarray spectrogram containing the channel you wish to use for scoring (can contain other channels as well, as long as 'chan' option is used)
     emg_spg --> spectrogram of emg, channel 1 is always selected out by default
@@ -42,19 +45,23 @@ def ssfm_v2(spg, emg_spg, nrem_percentiles=[50, 60, 65, 70], rem_percentiles=[60
     
     # First we get the EMG Band: 
     emg_bands = kd.get_bp_set2(emg_spg, bands=bp_def, pandas=True)
-    emg = emg_bands.xs(1, level='channel').omega
-    
+    try:
+        emg = emg_bands.xs(1, level='cahnnel').omega
+    except TypeError:
+        emg = emg_bands.omega
+    #emg = kd.get_smoothed_da(emg, smoothing_sigma=ss)
+
     # Then we get the delta metric to be used for NREM scoring:
     delta = kd.get_bandpower(spg, f_range=(0.5, 4))
-    delta_smooth = kd.get_smoothed_da(delta, smoothing_sigma=8)
+    delta_smooth = kd.get_smoothed_da(delta, smoothing_sigma=ss)
 
     # Then Theta Band:
     theta_narrow = (5, 10)
     theta_wide = (2, 16)
     tn = kd.get_bandpower(spg, f_range=theta_narrow)
-    tn = kd.get_smoothed_da(tn, smoothing_sigma=8)
+    tn = kd.get_smoothed_da(tn, smoothing_sigma=ss)
     tw = kd.get_bandpower(spg, f_range=theta_wide)
-    tw = kd.get_smoothed_da(tw, smoothing_sigma=8)  
+    tw = kd.get_smoothed_da(tw, smoothing_sigma=ss)  
     thetaband = tn/tw
     thetaband = (thetaband/emg)/emg
 
@@ -80,7 +87,7 @@ def ssfm_v2(spg, emg_spg, nrem_percentiles=[50, 60, 65, 70], rem_percentiles=[60
     scoring_df.loc[scoring_df.Delta >= nrem_threshold, 'state'] = 'NREM'
     
     # Now we need to set the threshold for REM::
-    hist_rem, theta = ssu.threshplot(data=thetaband.values, time=spg.datetime.values, percentiles=rem_percentiles)
+    hist_rem, theta = ssu.threshplot(data=thetaband.values, time=spg.datetime.values, percentiles=rem_percentiles, cut=95)
     print("Violet --> " + str(rem_percentiles[0]))
     print("Blue --> " + str(rem_percentiles[1]))
     print("Green --> " + str(rem_percentiles[2]))
@@ -108,6 +115,6 @@ def ssfm_v2(spg, emg_spg, nrem_percentiles=[50, 60, 65, 70], rem_percentiles=[60
     if user_hyp is not None:
         ssfm_ax, user_ax = ssu.compare_hypnos_for_me(spg, final_hypno, user_hyp)
     
-    m, d, g = ssu.plot_hypno_for_me(final_hypno, spg, emg_spg, bp_def)
+    m, d, g = ssu.plot_hypno_for_me(final_hypno, spg, emg_spg, bp_def, chan=chan)
     return hp.DatetimeHypnogram(final_hypno)
 
