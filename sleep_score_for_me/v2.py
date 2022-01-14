@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy
+from sleep_score_for_me.artifactus_rejectus import artifactus_identicus, artifactus_rejectus
 import sleep_score_for_me.utils.ssfm_utils as ssu
 
 import kd_analysis.main.kd_utils as kd
@@ -16,7 +17,7 @@ Functions Needed to do the actual scoring and build the hypnogram
 -----------------------------------------------------------------
 """
 
-def ssfm_v2(spg, emg_spg, nrem_percentiles=[50, 60, 65, 70], rem_percentiles=[60, 70, 80, 85], chan=2, ss=8, user_hyp=None):
+def ssfm_v2(spg, emg_spg, nrem_percentiles=[50, 60, 65, 70], rem_percentiles=[60, 70, 80, 85], chan=2, ss=8, user_hyp=None, art=False):
     """
     Scores data into Wake, REM, NREM, and Transition-to-REM
     NOTE: Both spectrograms can have one channel or multiple. 
@@ -33,6 +34,10 @@ def ssfm_v2(spg, emg_spg, nrem_percentiles=[50, 60, 65, 70], rem_percentiles=[60
     except KeyError:
         print('Passing Channel Selection Error, Data Already Contains Single Channel')
     
+    if art == True:
+        art_hypno = artifactus_identicus(spg, emg_spg, bp_def, chan=chan, ss=ss)
+        spg = artifactus_rejectus(spg, art_hypno)
+
     # This gets our datetime index evenly spaced so the hypnogram comes out concatenated correctly
     dt_original = spg.datetime.values
     start = dt_original.min()
