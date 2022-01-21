@@ -122,6 +122,12 @@ def artifactus_inspectus(spg, mspg, chan, ss=8, ptiles=(50, 75, 90, 95, 97, 99))
         g.axhline(y=gp, ls='--', color='k')
         g.set_title('(Smoothed Omega)*(Smoothed Gamma) "Bandpower"')
     plt.show()
+    print(str(ptiles[0]))
+    print(str(ptiles[1]))
+    print(str(ptiles[2]))
+    print(str(ptiles[3]))
+    print(str(ptiles[4]))
+    print(str(ptiles[5]))
     
     d_in = float(input("Enter Delta Threshold: "))
     d_cut = np.percentile(ds, d_in)
@@ -173,6 +179,5 @@ def artifactus_rejectus(spg, hypno):
     """
     spg_states = kh.add_states(spg, hypno)
     good_spg = spg_states.where(spg_states.state == 'Good')
-    
     return good_spg
 

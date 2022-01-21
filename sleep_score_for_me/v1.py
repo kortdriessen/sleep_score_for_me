@@ -8,7 +8,7 @@ import hypnogram as hp
 
 from sklearn.decomposition import PCA
 from neurodsp.plts.utils import check_ax
-import sleep_score_for_me.utils as ssu
+import sleep_score_for_me.utils.ssfm_utils as ssu
 bp_def = dict(delta=(0.5, 4), theta=(4, 8), sigma = (11, 16), beta = (13, 30), low_gamma = (30, 55), high_gamma = (65, 90), omega=(300, 700))
 
 """
@@ -27,7 +27,7 @@ def ssfm_v1(spg, emg_spg, nrem_percentiles=[50, 60, 65, 70], rem_percentiles=[60
 
     # First we get the EMG Band: 
     emg_bands = kd.get_bp_set2(emg_spg, bands=bp_def, pandas=True)
-    emg = emg_bands.xs(1, level='channel').omega
+    emg = emg_bands.omega
     
     # Then we get one channel in a given frequency range, and do the PCA
     spg_np = spg.sel(channel=chan, frequency=f_range).to_numpy().T

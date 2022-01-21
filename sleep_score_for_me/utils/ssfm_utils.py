@@ -151,6 +151,36 @@ def plot_hypno_for_me(hypno, spg, emg_spg, bp_def, chan=2, smooth=True):
 
     return m, d, g
 
+def plot_hypno_for_me_v4(hypno, spg, emg_energy, bp_def, chan=2, smooth=True):
+    fig, (m, d, g) = plt.subplots(ncols=1, nrows=3, figsize=(35,15))
+    try:
+        spg = spg.sel(channel=chan)
+    except KeyError:
+        spg = spg
+    
+    #plot muscle activity
+    sns.lineplot(x=spg.datetime, y=emg_energy, color='black', ax=m) 
+    shade_hypno_for_me(hypnogram=hypno, ax=m)
+    m.set_title('Muscle Activity (Absolute Value of Amplitude)')
+
+    #plot delta power
+    delta = kd.get_bandpower(spg, bp_def['delta'])
+    if smooth==True:
+        delta = kd.get_smoothed_da(delta, smoothing_sigma=10)
+    sns.lineplot(x=delta.datetime, y=delta, color='black', ax=d)
+    shade_hypno_for_me(hypnogram=hypno, ax=d)
+    d.set_title('EEG-'+str(chan)+' Delta Bandpower')
+
+    #plot gamma power
+    gamma = kd.get_bandpower(spg, bp_def['gamma'])
+    if smooth==True:
+        gamma = kd.get_smoothed_da(gamma, smoothing_sigma=14)
+    sns.lineplot(x=spg.datetime, y=gamma, color='black', ax=g)
+    shade_hypno_for_me(hypnogram=hypno, ax=g)
+    g.set_title('EEG-'+str(chan)+' Gamma Bandpower')
+
+    return m, d, g
+
 def shade_hypno_for_me(
     hypnogram, ax=None, xlim=None
 ):
@@ -170,7 +200,7 @@ def shade_hypno_for_me(
         ax.axvspan(
             bout.start_time,
             bout.end_time,
-            alpha=0.3,
+            alpha=0.5,
             color=hypno_colors[bout.state],
             zorder=1000,
             ec="none",
@@ -179,13 +209,20 @@ def shade_hypno_for_me(
     ax.set_xlim(xlim)
     return ax
 
-def compare_hypnos_for_me(spg, ssfm_hyp, your_hyp):
+def compare_hypnos_for_me(spg, chan, ssfm_hyp, your_hyp, smooth=True):
+    try:
+        spg = spg.sel(channel=chan)
+    except KeyError:
+        spg = spg
     f, (ssfm_hyp_ax, your_hyp_ax) = plt.subplots(nrows=2, ncols=1, figsize=(35, 15))
     spg = kd.get_bandpower(spg, (0.5, 4))
+    if smooth==True:
+        spg = kd.get_smoothed_da(spg, smoothing_sigma=10)
     ssfm_hyp_ax = sns.lineplot(x=spg.datetime, y=spg, ax=ssfm_hyp_ax)
     ssfm_hyp_ax.set_title('SSFM Hypnogram')
     your_hyp_ax = sns.lineplot(x=spg.datetime, y=spg, ax=your_hyp_ax)
     your_hyp_ax.set_title('Your Hypnogram')
     shade_hypno_for_me(ssfm_hyp, ax=ssfm_hyp_ax)
     shade_hypno_for_me(your_hyp, ax=your_hyp_ax)
-    return ssfm_hyp_ax, your_hyp_ax
+    fo = kd.get_frac_oc([ssfm_hyp, your_hyp], ['SSFM', 'Human'])
+    return fo
