@@ -13,7 +13,7 @@ from scipy.signal import butter, lfilter
 import kd_analysis.main.kd_utils as kd
 import hypnogram as hp
 
-bp_def_scoring = dict(sub_delta = (0.5, 1), delta=(0.5, 5), theta=(6, 9), alpha = (10.5, 15), sigma = (11, 16), beta = (22, 30), gamma = (35, 45), wide = (0, 30))
+bp_def_v4 = dict(sub_delta = (0.5, 1), delta=(0.5, 5), theta=(6, 9), alpha = (10.5, 15), sigma = (11, 16), beta = (22, 30), gamma = (35, 45), wide = (0, 30))
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
@@ -102,6 +102,14 @@ def get_indexes(bp, mus):
     # Artifact Index
     ixa = (((2*bp.sub_delta.values)+bp.beta.values)*bp.gamma.values)/(bp.delta.values+bp.theta.values+bp.alpha.values+bp.beta.values+bp.gamma.values)
     ixa = get_norm_feature(ixa)
+
+    # delta index used for scoring out delta arts during wake:
+    ixd = bp.delta.values
+    ixd = get_norm_feature(ixd)
+
+    # Muscle Index for general use
+    ixm = mus
+    ixm = get_norm_feature(ixm) 
     
     # Bandpower ratios
     bpr_low = bp.sub_delta.values/bp.wide.values
@@ -114,7 +122,8 @@ def get_indexes(bp, mus):
     ix_df['IXR'] = ixr
     ix_df['IXA'] = ixa
     ix_df['PRL'] = bpr_low
-    
+    ix_df['IXD'] = ixd
+    ix_df['IXM'] = ixm
     return ix_df
     
 
@@ -142,11 +151,15 @@ def scoring_decision_tree(x):
     x.loc[np.logical_and(((x.IXW>x.IXN) & (x.IXW>x.IXR)), np.logical_and(x.state!='REM', x.state!='NREM')),'state'] = 'Wake'
     x.loc[np.logical_and(((x.IXN>x.IXW) & (x.IXN>x.IXR)), np.logical_and(x.state!='REM', x.state!='Wake')),'state'] = 'NREM'
     x.loc[np.logical_and(((x.IXR>x.IXN) & (x.IXR>x.IXW)), np.logical_and(x.state!='NREM', x.state!='Wake')),'state'] = 'REM'
+
     
+    x.loc[np.logical_and(x.IXD>0.5, x.state=='Wake'),'state'] = 'Art'
+    
+
     hypno = ssu.build_hypno_for_me(x['state'])
     return hp.DatetimeHypnogram(hypno)
 
-def ssfm_v4(eeg, emg, chan, window_length=2, overlap=0, bp_def=bp_def_scoring, avg=False, nrows=None, user_hyp=None):
+def ssfm_v4(eeg, emg, chan, window_length=2, overlap=0, bp_def=bp_def_v4, avg=False, nrows=None, user_hyp=None):
     bp, eeg_spg = get_bp_features(eeg, bp_def, window_length=window_length, overlap=overlap, chan=chan)
     mus = get_muscle_energy(emg, window_length=window_length, overlap=overlap, filt=True)
     ix_df = get_indexes(bp, mus)
@@ -159,4 +172,6 @@ def ssfm_v4(eeg, emg, chan, window_length=2, overlap=0, bp_def=bp_def_scoring, a
 
     if user_hyp is not None:
         fo = ssu.compare_hypnos_for_me(eeg_spg, chan, hypno, user_hyp)
-    return hp.DatetimeHypnogram(hypno), fo
+        return hp.DatetimeHypnogram(hypno), fo
+    else:
+        return hp.DatetimeHypnogram(hypno)
