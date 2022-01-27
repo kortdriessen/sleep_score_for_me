@@ -56,7 +56,6 @@ INSTALL_REQUIRES = [
     "seaborn",
     "neurodsp",
     "hypnogram @ git+https://github.com/CSC-UW/hypnogram.git@master#egg=hypnogram",
-    "ecephys @ git+https://github.com/CSC-UW/ecephys.git@kd#egg=ecephys"
 ]
 
 PYTHON_REQUIRES = ">= 3.7"
