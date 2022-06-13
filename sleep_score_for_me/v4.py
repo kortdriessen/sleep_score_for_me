@@ -3,9 +3,7 @@ from webbrowser import get
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import scipy
-from sleep_score_for_me.artifactus_rejectus import artifactus_identicus, artifactus_rejectus
 import sleep_score_for_me.utils.ssfm_utils as ssu
 from sklearn.decomposition import PCA
 from scipy.signal import butter, lfilter
@@ -13,7 +11,7 @@ from scipy.signal import butter, lfilter
 import kd_analysis.main.kd_utils as kd
 import hypnogram as hp
 
-bp_def_v4 = dict(sub_delta = (0.5, 1), delta=(0.5, 5), theta=(6, 9), alpha = (10.5, 15), sigma = (11, 16), beta = (22, 30), gamma = (35, 45), wide = (0, 30))
+bp_def_v4 = dict(sub_delta = (0, 1), delta=(0.5, 5), theta=(6, 9), alpha = (10.5, 15), sigma = (11, 16), beta = (22, 30), gamma = (35, 45), wide = (0, 30))
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
@@ -153,7 +151,7 @@ def scoring_decision_tree(x):
     x.loc[np.logical_and(((x.IXR>x.IXN) & (x.IXR>x.IXW)), np.logical_and(x.state!='NREM', x.state!='Wake')),'state'] = 'REM'
 
     
-    x.loc[np.logical_and(x.IXD>0.5, x.state=='Wake'),'state'] = 'Art'
+    #x.loc[np.logical_and(x.IXD>0.5, x.state=='Wake'),'state'] = 'Art'
     
 
     hypno = ssu.build_hypno_for_me(x['state'])
@@ -162,6 +160,14 @@ def scoring_decision_tree(x):
 def ssfm_v4(eeg, emg, chan, window_length=2, overlap=0, bp_def=bp_def_v4, avg=False, nrows=None, user_hyp=None):
     bp, eeg_spg = get_bp_features(eeg, bp_def, window_length=window_length, overlap=overlap, chan=chan)
     mus = get_muscle_energy(emg, window_length=window_length, overlap=overlap, filt=True)
+    
+    if len(bp.delta.values) != len(mus):
+        bp = bp.drop_isel(datetime=4799)
+        eeg_spg = eeg_spg.drop_isel(datetime=4799)
+    
+    print(len(bp.datetime.values))
+    print(len(mus))
+
     ix_df = get_indexes(bp, mus)
 
     if avg == True:
