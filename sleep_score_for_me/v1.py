@@ -3,7 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import ecephys.signal.kd_utils as kd
 import hypnogram as hp
 
 from sklearn.decomposition import PCA
